@@ -12,20 +12,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-token = os.getenv('BOT_TOKEN') # Сначала проверяем .env или переменные окружения
+# Используйте список возможных имен
+possible_keys = ['BOT_TOKEN', 'BOT-TOK'] 
 
-# Если в переменных окружения пусто, пробуем Colab Secrets
+token = None
+for key in possible_keys:
+    token = os.getenv(key)
+    if token:
+        break
+
 if not token:
     try:
         from google.colab import userdata
-        # Ключевой момент: userdata.get работает только в ячейке ноутбука
-        # Если запуск из терминала, эта функция сама по себе вызовет вашу ошибку
-        token = userdata.get('BOT_TOKEN')
+        for key in possible_keys:
+            token = userdata.get(key)
+            if token:
+                break
     except (ImportError, AttributeError, Exception):
-        # Если мы не в Colab или возникла ошибка ядра — просто идем дальше
         token = None
 
 if not token:
+    # Ваше сообщение об ошибке
     raise ValueError("Токен бота не найден. Проверьте Colab Secrets или .env")
 
 bot = Bot(token=token)
