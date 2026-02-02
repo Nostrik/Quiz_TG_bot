@@ -7,19 +7,21 @@
 # dp = Dispatcher()
 
 import os
+from aiogram import Bot, Dispatcher
+from dotenv import load_dotenv
+
 try:
     from google.colab import userdata
 except ImportError:
     userdata = None
 
-from aiogram import Bot, Dispatcher
-from dotenv import load_dotenv
-
 load_dotenv()
 
-if userdata and 'BOT_TOKEN' in userdata:
-    token = userdata.get('BOT_TOKEN')
-else:
+token = None
+if userdata:
+    token = userdata.get('BOT_TOKEN') # Используйте метод .get()
+
+if not token:
     token = os.getenv('BOT_TOKEN')
 
 if not token:
@@ -27,3 +29,4 @@ if not token:
 
 bot = Bot(token=token)
 dp = Dispatcher()
+
