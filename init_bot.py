@@ -32,7 +32,7 @@ if not token:
         token = None
 
 if not token:
-    # Ваше сообщение об ошибке
+    print(f"DEBUG: Token value is: '{token}'")
     raise ValueError("Токен бота не найден. Проверьте Colab Secrets или .env")
 
 bot = Bot(token=token)
