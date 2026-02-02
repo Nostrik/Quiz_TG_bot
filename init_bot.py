@@ -10,22 +10,23 @@ import os
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
 
-try:
-    from google.colab import userdata
-except ImportError:
-    userdata = None
-
 load_dotenv()
 
-token = None
-if userdata:
-    token = userdata.get('BOT_TOKEN') # Используйте метод .get()
+token = os.getenv('BOT_TOKEN') # Сначала проверяем .env или переменные окружения
+
+# Если в переменных окружения пусто, пробуем Colab Secrets
+if not token:
+    try:
+        from google.colab import userdata
+        # Ключевой момент: userdata.get работает только в ячейке ноутбука
+        # Если запуск из терминала, эта функция сама по себе вызовет вашу ошибку
+        token = userdata.get('BOT_TOKEN')
+    except (ImportError, AttributeError, Exception):
+        # Если мы не в Colab или возникла ошибка ядра — просто идем дальше
+        token = None
 
 if not token:
-    token = os.getenv('BOT_TOKEN')
-
-if not token:
-    raise ValueError("Токен бота не найден. Проверьте Colab Secrets или ваш .env файл.")
+    raise ValueError("Токен бота не найден. Проверьте Colab Secrets или .env")
 
 bot = Bot(token=token)
 dp = Dispatcher()
