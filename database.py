@@ -1,10 +1,9 @@
 import logging
 import aiosqlite
 import config
-from pathlib import Path
 
-if Path('quiz_bot.db').exists():
-    DB_NAME = 'quiz_bot.db'
+
+DB_NAME = 'quiz_bot.db'
 
 
 async def create_table():
@@ -30,13 +29,12 @@ async def update_quiz_index(user_id, index):
     Updates or inserts the current quiz question index for a specific user in the database.
     """
     logging.info(f"Attempting to update quiz index for user {user_id} to index {index}.")
-    try:
-        async with aiosqlite.connect(DB_NAME) as db:
-            await db.execute('INSERT OR REPLACE INTO quiz_state (user_id, question_index) VALUES (?, ?)', (user_id, index))
-            await db.commit()
-        logging.info(f"Successfully updated quiz index for user {user_id}.")
-    except Exception as e:
-        logging.error(f"Failed to update quiz index for user {user_id}. Error: {e}")
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute('''
+            INSERT OR REPLACE INTO quiz_state (user_id, question_index, last_score) 
+            VALUES (?, ?, COALESCE((SELECT last_score FROM quiz_state WHERE user_id = ?), 0))
+        ''', (user_id, index, user_id))
+        await db.commit()
 
 
 async def get_quiz_index(user_id):
@@ -66,8 +64,12 @@ async def update_quiz_score(user_id, score):
     """
     logging.info(f"Updating score for user {user_id} to {score}.")
     async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute('UPDATE quiz_state SET last_score = ? WHERE user_id = ?', (score, user_id))
+        await db.execute('''
+            INSERT OR REPLACE INTO quiz_state (user_id, last_score, question_index) 
+            VALUES (?, ?, COALESCE((SELECT question_index FROM quiz_state WHERE user_id = ?), 0))
+        ''', (user_id, score, user_id))
         await db.commit()
+
 
 async def get_quiz_data(user_id):
     """

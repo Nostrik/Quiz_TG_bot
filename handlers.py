@@ -23,6 +23,17 @@ async def get_question(message, user_id):
     Fetches the current question for the user and sends it with an inline keyboard.
     """
     current_question_index = await get_quiz_index(user_id)
+
+    if current_question_index >= len(quiz_data):
+        data = await get_quiz_data(user_id)
+        final_score = data[1] if data else 0
+        
+        await message.answer(
+            f"🏁 **Квиз завершен!**\n"
+            f"Ваш итоговый результат: {final_score} из {len(quiz_data)} правильных ответов."
+        )
+        return
+    
     correct_index = quiz_data[current_question_index]['correct_option']
     opts = quiz_data[current_question_index]['options']
 
@@ -50,13 +61,9 @@ async def right_answer(callback: types.CallbackQuery):
     
     await update_quiz_index(callback.from_user.id, new_index)
     await update_quiz_score(callback.from_user.id, new_score)
+    await get_question(callback.message, callback.from_user.id)
 
-    if new_index < len(quiz_data):
-        await get_question(callback.message, callback.from_user.id)
-    else:
-        await callback.message.answer(f"Квиз завершен! Ваш результат: {new_score} из {len(quiz_data)}.")
 
- 
 @router.callback_query(F.data == "wrong_answer")
 async def wrong_answer(callback: types.CallbackQuery):
     """
@@ -75,8 +82,4 @@ async def wrong_answer(callback: types.CallbackQuery):
 
     current_question_index += 1
     await update_quiz_index(callback.from_user.id, current_question_index)
-
-    if current_question_index < len(quiz_data):
-        await get_question(callback.message, callback.from_user.id)
-    else:
-        await callback.message.answer("Это был последний вопрос. Квиз завершен!")
+    await get_question(callback.message, callback.from_user.id)

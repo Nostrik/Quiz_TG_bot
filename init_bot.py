@@ -1,52 +1,57 @@
-# import os
-# from aiogram import Bot, Dispatcher
-# from dotenv import load_dotenv
+import os
+import logging
+from aiogram import Bot, Dispatcher
+from dotenv import load_dotenv
 
-# load_dotenv()
-# bot = Bot(token=os.getenv('BOT-TOKEN'))
-# dp = Dispatcher()
+load_dotenv()
+bot = Bot(token=os.getenv('BOT-TOKEN'))
+dp = Dispatcher()
 
 import os
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
+from pathlib import Path
 
-# Загружаем переменные из .env файла (если есть)
-load_dotenv()
+# 1. Проверяем наличие .env файла. Если он есть — загружаем.
+env_path = Path('.env')
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+    # print(f"DEBUG: Keys found in .env: {list(os.environ.keys())[-5:]}")
 
-# Используем список возможных имен ключей (с дефисом и подчеркиванием)
-possible_keys = ['BOT_TOKEN', 'BOT-TOK']
+    # print("DEBUG: .env file found and loaded.")
+    logging.info(".env file found and loaded.")
+else:
+    logging.info(".env file NOT found. Searching in environment/Colab secrets..")
+    # print("DEBUG: .env file NOT found. Searching in environment/Colab secrets...")
 
+# 2. Ищем токен (сначала в env, переданном через export, затем в Colab Secrets)
+possible_keys = ['BOT_TOKEN', 'BOT-TOK', 'BOT-TOKEN']
 token = None
 
-# 1. Сначала пытаемся получить токен из переменных окружения
 for key in possible_keys:
+    # os.getenv вытащит значение, которое вы передали через export BOT_TOKEN="..."
     token = os.getenv(key)
     if token:
+        # print(f"DEBUG: Token found in environment variables (via {key}).")
+        logging.info(f"Token found in environment variables (via {key}).")
         break
 
-# 2. Если токен не найден в окружении, пробуем Colab Secrets
+# 3. Если в обычном окружении нет, идем в Colab Secrets
 if not token:
     try:
         from google.colab import userdata
-        # userdata.get() может вызвать AttributeError, если запущено не в ячейке Colab
         for key in possible_keys:
             token = userdata.get(key)
             if token:
+                logging.info(f"Token found in Colab Secrets (via {key}).")
+                # print(f"DEBUG: Token found in Colab Secrets (via {key}).")
                 break
-    except (ImportError, AttributeError, Exception) as e:
-        # Если возникла ошибка (например, нет ядра Colab), просто игнорируем и продолжаем
-        print(f"DEBUG INFO: Colab Secrets access failed: {e}")
-        token = None
+    except (ImportError, AttributeError):
+        pass
 
-# >>>>> ПРОВЕРКА И ОТЛАДКА <<<<<
-# Эта строка покажет, какое значение (или None/пусто) в итоге попало в переменную token
-print(f"DEBUG: Final token value is: '{token}'")
-
-# 3. Финальная проверка: если токен все еще пуст, выбрасываем ошибку
+# 4. Проверка и запуск
 if not token:
-    raise ValueError("Токен бота не найден. Проверьте Colab Secrets или .env файл.")
+    raise ValueError("Токен бота не найден! Либо создайте .env, либо используйте export BOT_TOKEN=\"...\", либо добавьте в Colab Secrets.")
 
-# 4. Инициализация бота
 bot = Bot(token=token)
 dp = Dispatcher()
-
