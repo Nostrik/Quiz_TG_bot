@@ -1,13 +1,14 @@
+# import os
+# import logging
+# from aiogram import Bot, Dispatcher
+# from dotenv import load_dotenv
+
+# load_dotenv()
+# bot = Bot(token=os.getenv('BOT-TOKEN'))
+# dp = Dispatcher()
+
 import os
 import logging
-from aiogram import Bot, Dispatcher
-from dotenv import load_dotenv
-
-load_dotenv()
-bot = Bot(token=os.getenv('BOT-TOKEN'))
-dp = Dispatcher()
-
-import os
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
 from pathlib import Path
